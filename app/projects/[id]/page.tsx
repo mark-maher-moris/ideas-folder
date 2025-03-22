@@ -1,290 +1,46 @@
-"use client";
-import { useState, useEffect } from "react";
-import {
-  collection,
-  getDocs,
-  addDoc,
-  updateDoc,
-  doc,
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Card } from "@/components/ui/card";
+// Server Component
 import { Project } from "@/types/project";
-import { BarChart, Users, Activity, X } from "lucide-react";
-import { Label } from "@/components/ui/label";
+import { getDoc, doc, getDocs, collection } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { ProjectDetails } from "@/components/poject-details";
 
-export default function AdminDashboard() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [analytics, setAnalytics] = useState({
-    totalViews: 0,
-    totalClicks: 0,
-    activeUsers: 0,
-  });
-  const [newProject, setNewProject] = useState({
-    name: "",
-    description: "",
-    joinLink: "",
-    tags: "",
-    requiredTalents: "",
-    coverImage: "",
-    images: [] as string[],
-  });
-  const [additionalImageUrls, setAdditionalImageUrls] = useState<string[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
+// Fetch project data based on ID
+async function fetchProject(id: string) {
+  const projectDoc = await getDoc(doc(db, "projects", id));
+  if (projectDoc.exists()) {
+    return { id: projectDoc.id, ...projectDoc.data() } as Project;
+  }
+  return null;
+}
 
-  useEffect(() => {
-    fetchProjects();
-    fetchAnalytics();
-  }, []);
-
-  const fetchProjects = async () => {
+// Generate static params for all projects
+export async function generateStaticParams() {
+  try {
     const projectsSnapshot = await getDocs(collection(db, "projects"));
-    const projectsList = projectsSnapshot.docs.map((doc) => ({
+    const projectIds = projectsSnapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data(),
-    } as Project));
-    setProjects(projectsList);
-  };
+    }));
+    return projectIds;
+  } catch (error) {
+    console.error("Error fetching project IDs for static generation:", error);
+    return [];
+  }
+}
 
-  const fetchAnalytics = async () => {
-    const analyticsSnapshot = await getDocs(collection(db, "analytics"));
-    if (!analyticsSnapshot.empty) {
-      const data = analyticsSnapshot.docs[0].data();
-      setAnalytics({
-        totalViews: data.totalViews || 0,
-        totalClicks: data.totalClicks || 0,
-        activeUsers: data.activeUsers || 0,
-      });
-    }
-  };
+// Server Component
+export default async function ProjectPage({ params }: { params: { id: string } }) {
+  const project = await fetchProject(params.id);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsUploading(true);
-    try {
-      await addDoc(collection(db, "projects"), {
-        ...newProject,
-        tags: newProject.tags.split(",").map((tag) => tag.trim()),
-        requiredTalents: newProject.requiredTalents
-          .split(",")
-          .map((talent) => talent.trim()),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-      setNewProject({
-        name: "",
-        description: "",
-        joinLink: "",
-        tags: "",
-        requiredTalents: "",
-        coverImage: "",
-        images: [],
-      });
-      setAdditionalImageUrls([]);
-      fetchProjects();
-    } catch (error) {
-      console.error("Error adding project:", error);
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewProject({ ...newProject, coverImage: e.target.value });
-  };
-
-  const handleAdditionalImageChange = (
-    index: number,
-    value: string
-  ) => {
-    const updatedImages = [...additionalImageUrls];
-    updatedImages[index] = value;
-    setAdditionalImageUrls(updatedImages);
-    setNewProject({ ...newProject, images: updatedImages });
-  };
-
-  const addAdditionalImageField = () => {
-    setAdditionalImageUrls([...additionalImageUrls, ""]);
-  };
-
-  const removeAdditionalImageField = (index: number) => {
-    const updatedImages = additionalImageUrls.filter((_, i) => i !== index);
-    setAdditionalImageUrls(updatedImages);
-    setNewProject({ ...newProject, images: updatedImages });
-  };
-
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-8">Admin Dashboard</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="p-6">
-          <div className="flex items-center gap-4">
-            <BarChart className="w-8 h-8 text-primary" />
-            <div>
-              <p className="text-sm text-muted-foreground">Total Views</p>
-              <p className="text-2xl font-bold">{analytics.totalViews}</p>
-            </div>
-          </div>
-        </Card>
-        <Card className="p-6">
-          <div className="flex items-center gap-4">
-            <Users className="w-8 h-8 text-primary" />
-            <div>
-              <p className="text-sm text-muted-foreground">Active Users</p>
-              <p className="text-2xl font-bold">{analytics.activeUsers}</p>
-            </div>
-          </div>
-        </Card>
-        <Card className="p-6">
-          <div className="flex items-center gap-4">
-            <Activity className="w-8 h-8 text-primary" />
-            <div>
-              <p className="text-sm text-muted-foreground">Total Clicks</p>
-              <p className="text-2xl font-bold">{analytics.totalClicks}</p>
-            </div>
-          </div>
-        </Card>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Add New Project</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label className="block text-sm font-medium mb-1">
-                Project Name
-              </Label>
-              <Input
-                value={newProject.name}
-                onChange={(e) =>
-                  setNewProject({ ...newProject, name: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div>
-              <Label className="block text-sm font-medium mb-1">
-                Description
-              </Label>
-              <Textarea
-                value={newProject.description}
-                onChange={(e) =>
-                  setNewProject({ ...newProject, description: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div>
-              <Label className="block text-sm font-medium mb-1">
-                Join Link
-              </Label>
-              <Input
-                value={newProject.joinLink}
-                onChange={(e) =>
-                  setNewProject({ ...newProject, joinLink: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div>
-              <Label className="block text-sm font-medium mb-1">
-                Tags (comma-separated)
-              </Label>
-              <Input
-                value={newProject.tags}
-                onChange={(e) =>
-                  setNewProject({ ...newProject, tags: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div>
-              <Label className="block text-sm font-medium mb-1">
-                Required Talents (comma-separated)
-              </Label>
-              <Input
-                value={newProject.requiredTalents}
-                onChange={(e) =>
-                  setNewProject({ ...newProject, requiredTalents: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div>
-              <Label className="block text-sm font-medium mb-1">
-                Cover Image URL
-              </Label>
-              <Input
-                type="text"
-                value={newProject.coverImage}
-                onChange={handleCoverImageChange}
-                placeholder="Enter cover image URL"
-                required
-              />
-            </div>
-            <div>
-              <Label className="block text-sm font-medium mb-1">
-                Additional Images URLs
-              </Label>
-              {additionalImageUrls.map((url, index) => (
-                <div key={index} className="flex items-center gap-2 mb-2">
-                  <Input
-                    type="text"
-                    value={url}
-                    onChange={(e) => handleAdditionalImageChange(index, e.target.value)}
-                    placeholder={`Image ${index + 1} URL`}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeAdditionalImageField(index)}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
-              <Button type="button" variant="outline" onClick={addAdditionalImageField}>
-                Add Image URL
-              </Button>
-            </div>
-            <Button type="submit" disabled={isUploading}>
-              {isUploading ? "Adding..." : "Add Project"}
-            </Button>
-          </form>
-        </div>
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Existing Projects</h2>
-          <div className="space-y-4">
-            {projects.map((project) => (
-              <Card key={project.id} className="p-4">
-                <div className="flex items-start gap-4">
-                  {project.coverImage && (
-                    <img
-                      src={project.coverImage}
-                      alt={project.name}
-                      className="w-24 h-24 object-cover rounded"
-                    />
-                  )}
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold">{project.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {project.description}
-                    </p>
-                    <div className="mt-2">
-                      <p className="text-sm">
-                        Required Talents: {project.requiredTalents.join(", ")}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+  if (!project) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-red-500">Project Not Found</h1>
+          <p className="mt-4 text-muted-foreground">The requested project does not exist.</p>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  return <ProjectDetails project={project} />;
 }
