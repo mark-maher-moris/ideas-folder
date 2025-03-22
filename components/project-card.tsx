@@ -22,6 +22,17 @@ export function ProjectCard({ project }: ProjectCardProps) {
         />
         
         <div className="p-6">
+          {/* Show Project Image if Available */}
+          {project.coverImage && (
+            <div className="mb-4">
+              <img
+                src={project.coverImage}
+                alt={project.name}
+                className="w-full h-48 object-cover rounded-md"
+              />
+            </div>
+          )}
+
           <div className="flex items-start gap-4 mb-4">
             <Folder className="w-8 h-8 text-primary" />
             <div className="flex-1">

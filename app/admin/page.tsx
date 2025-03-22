@@ -1,15 +1,13 @@
 "use client";
-
 import { useState, useEffect } from 'react';
-import { collection, getDocs, addDoc, updateDoc, doc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '@/lib/firebase';
+import { collection, getDocs, addDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Project } from '@/types/project';
-import { BarChart, Users, Activity, X, Image as ImageIcon } from 'lucide-react';
+import { BarChart, Users, Activity, X } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 
 export default function AdminDashboard() {
@@ -28,8 +26,7 @@ export default function AdminDashboard() {
     coverImage: '',
     images: [] as string[],
   });
-  const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
-  const [additionalImages, setAdditionalImages] = useState<File[]>([]);
+  const [additionalImageUrls, setAdditionalImageUrls] = useState<string[]>([]); // Store additional image URLs
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
@@ -38,16 +35,16 @@ export default function AdminDashboard() {
   }, []);
 
   const fetchProjects = async () => {
-    const projectsSnapshot = await getDocs(collection(db!, 'projects'));
-    const projectsList = projectsSnapshot.docs.map(doc => ({
+    const projectsSnapshot = await getDocs(collection(db, 'projects'));
+    const projectsList = projectsSnapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data()
+      ...doc.data(),
     } as Project));
     setProjects(projectsList);
   };
 
   const fetchAnalytics = async () => {
-    const analyticsSnapshot = await getDocs(collection(db!, 'analytics'));
+    const analyticsSnapshot = await getDocs(collection(db, 'analytics'));
     if (!analyticsSnapshot.empty) {
       const data = analyticsSnapshot.docs[0].data();
       setAnalytics({
@@ -58,49 +55,17 @@ export default function AdminDashboard() {
     }
   };
 
-  const uploadImage = async (file: File, path: string) => {
-    const storageRef = ref(storage!, path);
-    await uploadBytes(storageRef, file);
-    return getDownloadURL(storageRef);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsUploading(true);
-
     try {
-      let coverImageUrl = '';
-      let additionalImageUrls: string[] = [];
-
-      // Upload cover image
-      if (coverImageFile) {
-        const timestamp = Date.now();
-        coverImageUrl = await uploadImage(
-          coverImageFile,
-          `projects/${timestamp}_${coverImageFile.name}`
-        );
-      }
-
-      // Upload additional images
-      for (const file of additionalImages) {
-        const timestamp = Date.now();
-        const url = await uploadImage(
-          file,
-          `projects/${timestamp}_${file.name}`
-        );
-        additionalImageUrls.push(url);
-      }
-
-      await addDoc(collection(db!, 'projects'), {
+      await addDoc(collection(db, 'projects'), {
         ...newProject,
-        coverImage: coverImageUrl,
-        images: additionalImageUrls,
-        tags: newProject.tags.split(',').map(tag => tag.trim()),
-        requiredTalents: newProject.requiredTalents.split(',').map(talent => talent.trim()),
+        tags: newProject.tags.split(',').map((tag) => tag.trim()),
+        requiredTalents: newProject.requiredTalents.split(',').map((talent) => talent.trim()),
         createdAt: new Date(),
         updatedAt: new Date(),
       });
-
       setNewProject({
         name: '',
         description: '',
@@ -110,8 +75,7 @@ export default function AdminDashboard() {
         coverImage: '',
         images: [],
       });
-      setCoverImageFile(null);
-      setAdditionalImages([]);
+      setAdditionalImageUrls([]);
       fetchProjects();
     } catch (error) {
       console.error('Error adding project:', error);
@@ -121,25 +85,29 @@ export default function AdminDashboard() {
   };
 
   const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      setCoverImageFile(e.target.files[0]);
-    }
+    setNewProject({ ...newProject, coverImage: e.target.value });
   };
 
-  const handleAdditionalImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setAdditionalImages(Array.from(e.target.files));
-    }
+  const handleAdditionalImageChange = (index: number, value: string) => {
+    const updatedImages = [...additionalImageUrls];
+    updatedImages[index] = value;
+    setAdditionalImageUrls(updatedImages);
+    setNewProject({ ...newProject, images: updatedImages });
   };
 
-  const removeAdditionalImage = (index: number) => {
-    setAdditionalImages(prev => prev.filter((_, i) => i !== index));
+  const addAdditionalImageField = () => {
+    setAdditionalImageUrls([...additionalImageUrls, '']);
+  };
+
+  const removeAdditionalImageField = (index: number) => {
+    const updatedImages = additionalImageUrls.filter((_, i) => i !== index);
+    setAdditionalImageUrls(updatedImages);
+    setNewProject({ ...newProject, images: updatedImages });
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-4xl font-bold mb-8">Admin Dashboard</h1>
-      
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card className="p-6">
           <div className="flex items-center gap-4">
@@ -150,7 +118,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         </Card>
-        
         <Card className="p-6">
           <div className="flex items-center gap-4">
             <Users className="w-8 h-8 text-primary" />
@@ -160,7 +127,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         </Card>
-        
         <Card className="p-6">
           <div className="flex items-center gap-4">
             <Activity className="w-8 h-8 text-primary" />
@@ -171,7 +137,6 @@ export default function AdminDashboard() {
           </div>
         </Card>
       </div>
-      
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
           <h2 className="text-2xl font-semibold mb-4">Add New Project</h2>
@@ -184,7 +149,6 @@ export default function AdminDashboard() {
                 required
               />
             </div>
-            
             <div>
               <Label className="block text-sm font-medium mb-1">Description</Label>
               <Textarea
@@ -193,7 +157,6 @@ export default function AdminDashboard() {
                 required
               />
             </div>
-            
             <div>
               <Label className="block text-sm font-medium mb-1">Join Link</Label>
               <Input
@@ -202,7 +165,6 @@ export default function AdminDashboard() {
                 required
               />
             </div>
-            
             <div>
               <Label className="block text-sm font-medium mb-1">Tags (comma-separated)</Label>
               <Input
@@ -211,7 +173,6 @@ export default function AdminDashboard() {
                 required
               />
             </div>
-            
             <div>
               <Label className="block text-sm font-medium mb-1">Required Talents (comma-separated)</Label>
               <Input
@@ -220,66 +181,45 @@ export default function AdminDashboard() {
                 required
               />
             </div>
-
             <div>
-              <Label className="block text-sm font-medium mb-1">Cover Image</Label>
-              <div className="flex items-center gap-4">
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleCoverImageChange}
-                  className="flex-1"
-                />
-                {coverImageFile && (
-                  <div className="flex items-center gap-2 bg-muted p-2 rounded">
-                    <span className="text-sm truncate max-w-[200px]">{coverImageFile.name}</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setCoverImageFile(null)}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <Label className="block text-sm font-medium mb-1">Additional Images</Label>
+              <Label className="block text-sm font-medium mb-1">Cover Image URL</Label>
               <Input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleAdditionalImagesChange}
+                type="text"
+                value={newProject.coverImage}
+                onChange={handleCoverImageChange}
+                placeholder="Enter cover image URL"
+                required
               />
-              {additionalImages.length > 0 && (
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  {additionalImages.map((file, index) => (
-                    <div key={index} className="flex items-center gap-2 bg-muted p-2 rounded">
-                      <ImageIcon className="w-4 h-4" />
-                      <span className="text-sm truncate flex-1">{file.name}</span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeAdditionalImage(index)}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
-            
+            <div>
+              <Label className="block text-sm font-medium mb-1">Additional Images URLs</Label>
+              {additionalImageUrls.map((url, index) => (
+                <div key={index} className="flex items-center gap-2 mb-2">
+                  <Input
+                    type="text"
+                    value={url}
+                    onChange={(e) => handleAdditionalImageChange(index, e.target.value)}
+                    placeholder={`Image ${index + 1} URL`}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeAdditionalImageField(index)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button type="button" variant="outline" onClick={addAdditionalImageField}>
+                Add Image URL
+              </Button>
+            </div>
             <Button type="submit" disabled={isUploading}>
-              {isUploading ? 'Uploading...' : 'Add Project'}
+              {isUploading ? 'Adding...' : 'Add Project'}
             </Button>
           </form>
         </div>
-        
         <div>
           <h2 className="text-2xl font-semibold mb-4">Existing Projects</h2>
           <div className="space-y-4">

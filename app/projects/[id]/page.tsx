@@ -1,198 +1,288 @@
 "use client";
+import { useState, useEffect } from "react";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  doc,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
+import { Project } from "@/types/project";
+import { BarChart, Users, Activity, X } from "lucide-react";
+import { Label } from "@/components/ui/label";
 
-import { useEffect, useState } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { Project } from '@/types/project';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { ExternalLink, Users, ChevronLeft, ChevronRight } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-
-export default function ProjectDetails({ params }: { params: { id: string } }) {
-  const [project, setProject] = useState<Project | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+export default function AdminDashboard() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [analytics, setAnalytics] = useState({
+    totalViews: 0,
+    totalClicks: 0,
+    activeUsers: 0,
+  });
+  const [newProject, setNewProject] = useState({
+    name: "",
+    description: "",
+    joinLink: "",
+    tags: "",
+    requiredTalents: "",
+    coverImage: "",
+    images: [] as string[],
+  });
+  const [additionalImageUrls, setAdditionalImageUrls] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
-    const fetchProject = async () => {
-      try {
-        const projectDoc = await getDoc(doc(db!, 'projects', params.id));
-        if (projectDoc.exists()) {
-          setProject({ id: projectDoc.id, ...projectDoc.data() } as Project);
-        } else {
-          setError('Project not found');
-        }
-      } catch (err) {
-        setError('Error loading project');
-        console.error('Error fetching project:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    fetchProjects();
+    fetchAnalytics();
+  }, []);
 
-    fetchProject();
-  }, [params.id]);
+  const fetchProjects = async () => {
+    const projectsSnapshot = await getDocs(collection(db, "projects"));
+    const projectsList = projectsSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    } as Project));
+    setProjects(projectsList);
+  };
 
-  const nextImage = () => {
-    if (project?.images) {
-      setCurrentImageIndex((prev) => 
-        prev === project.images.length - 1 ? 0 : prev + 1
-      );
+  const fetchAnalytics = async () => {
+    const analyticsSnapshot = await getDocs(collection(db, "analytics"));
+    if (!analyticsSnapshot.empty) {
+      const data = analyticsSnapshot.docs[0].data();
+      setAnalytics({
+        totalViews: data.totalViews || 0,
+        totalClicks: data.totalClicks || 0,
+        activeUsers: data.activeUsers || 0,
+      });
     }
   };
 
-  const previousImage = () => {
-    if (project?.images) {
-      setCurrentImageIndex((prev) => 
-        prev === 0 ? project.images.length - 1 : prev - 1
-      );
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsUploading(true);
+    try {
+      await addDoc(collection(db, "projects"), {
+        ...newProject,
+        tags: newProject.tags.split(",").map((tag) => tag.trim()),
+        requiredTalents: newProject.requiredTalents
+          .split(",")
+          .map((talent) => talent.trim()),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      setNewProject({
+        name: "",
+        description: "",
+        joinLink: "",
+        tags: "",
+        requiredTalents: "",
+        coverImage: "",
+        images: [],
+      });
+      setAdditionalImageUrls([]);
+      fetchProjects();
+    } catch (error) {
+      console.error("Error adding project:", error);
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-        </div>
-      </div>
-    );
-  }
+  const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewProject({ ...newProject, coverImage: e.target.value });
+  };
 
-  if (error || !project) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <Card className="p-6 text-center">
-          <h2 className="text-2xl font-bold text-red-500 mb-2">Error</h2>
-          <p className="text-muted-foreground">{error || 'Project not found'}</p>
-          <Button className="mt-4" onClick={() => window.history.back()}>
-            Go Back
-          </Button>
-        </Card>
-      </div>
-    );
-  }
+  const handleAdditionalImageChange = (
+    index: number,
+    value: string
+  ) => {
+    const updatedImages = [...additionalImageUrls];
+    updatedImages[index] = value;
+    setAdditionalImageUrls(updatedImages);
+    setNewProject({ ...newProject, images: updatedImages });
+  };
+
+  const addAdditionalImageField = () => {
+    setAdditionalImageUrls([...additionalImageUrls, ""]);
+  };
+
+  const removeAdditionalImageField = (index: number) => {
+    const updatedImages = additionalImageUrls.filter((_, i) => i !== index);
+    setAdditionalImageUrls(updatedImages);
+    setNewProject({ ...newProject, images: updatedImages });
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4">{project.name}</h1>
-          <div className="flex flex-wrap gap-2 mb-4">
-            {project.tags.map((tag) => (
-              <Badge key={tag} variant="secondary">
-                {tag}
-              </Badge>
-            ))}
-          </div>
-        </div>
-
-        {(project.coverImage || project.images?.length > 0) && (
-          <Card className="mb-8 overflow-hidden">
-            <div className="relative aspect-video">
-              {project.coverImage && (
-                <img
-                  src={project.coverImage}
-                  alt={project.name}
-                  className="w-full h-full object-cover"
-                />
-              )}
-              
-              {project.images && project.images.length > 0 && (
-                <div className="relative w-full h-full">
-                  <AnimatePresence mode="wait">
-                    <motion.img
-                      key={currentImageIndex}
-                      src={project.images[currentImageIndex]}
-                      alt={`${project.name} - Image ${currentImageIndex + 1}`}
-                      className="absolute inset-0 w-full h-full object-cover"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                    />
-                  </AnimatePresence>
-                  
-                  {project.images.length > 1 && (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="absolute left-4 top-1/2 transform -translate-y-1/2"
-                        onClick={previousImage}
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="absolute right-4 top-1/2 transform -translate-y-1/2"
-                        onClick={nextImage}
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </Button>
-                      
-                      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
-                        {project.images.map((_, index) => (
-                          <button
-                            key={index}
-                            className={`w-2 h-2 rounded-full transition-colors ${
-                              index === currentImageIndex
-                                ? 'bg-primary'
-                                : 'bg-primary/30'
-                            }`}
-                            onClick={() => setCurrentImageIndex(index)}
-                          />
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
+      <h1 className="text-4xl font-bold mb-8">Admin Dashboard</h1>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <Card className="p-6">
+          <div className="flex items-center gap-4">
+            <BarChart className="w-8 h-8 text-primary" />
+            <div>
+              <p className="text-sm text-muted-foreground">Total Views</p>
+              <p className="text-2xl font-bold">{analytics.totalViews}</p>
             </div>
-          </Card>
-        )}
-
-        <Card className="mb-8">
-          <div className="p-6">
-            <h2 className="text-2xl font-semibold mb-4">About this Project</h2>
-            <p className="text-muted-foreground whitespace-pre-wrap">
-              {project.description}
-            </p>
           </div>
         </Card>
-
-        <Card className="mb-8">
-          <div className="p-6">
-            <h2 className="text-2xl font-semibold mb-4">Required Talents</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {project.requiredTalents.map((talent) => (
-                <div
-                  key={talent}
-                  className="flex items-center gap-2 p-3 bg-secondary rounded-lg"
-                >
-                  <Users className="w-5 h-5 text-primary" />
-                  <span>{talent}</span>
+        <Card className="p-6">
+          <div className="flex items-center gap-4">
+            <Users className="w-8 h-8 text-primary" />
+            <div>
+              <p className="text-sm text-muted-foreground">Active Users</p>
+              <p className="text-2xl font-bold">{analytics.activeUsers}</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-6">
+          <div className="flex items-center gap-4">
+            <Activity className="w-8 h-8 text-primary" />
+            <div>
+              <p className="text-sm text-muted-foreground">Total Clicks</p>
+              <p className="text-2xl font-bold">{analytics.totalClicks}</p>
+            </div>
+          </div>
+        </Card>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div>
+          <h2 className="text-2xl font-semibold mb-4">Add New Project</h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label className="block text-sm font-medium mb-1">
+                Project Name
+              </Label>
+              <Input
+                value={newProject.name}
+                onChange={(e) =>
+                  setNewProject({ ...newProject, name: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div>
+              <Label className="block text-sm font-medium mb-1">
+                Description
+              </Label>
+              <Textarea
+                value={newProject.description}
+                onChange={(e) =>
+                  setNewProject({ ...newProject, description: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div>
+              <Label className="block text-sm font-medium mb-1">
+                Join Link
+              </Label>
+              <Input
+                value={newProject.joinLink}
+                onChange={(e) =>
+                  setNewProject({ ...newProject, joinLink: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div>
+              <Label className="block text-sm font-medium mb-1">
+                Tags (comma-separated)
+              </Label>
+              <Input
+                value={newProject.tags}
+                onChange={(e) =>
+                  setNewProject({ ...newProject, tags: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div>
+              <Label className="block text-sm font-medium mb-1">
+                Required Talents (comma-separated)
+              </Label>
+              <Input
+                value={newProject.requiredTalents}
+                onChange={(e) =>
+                  setNewProject({ ...newProject, requiredTalents: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div>
+              <Label className="block text-sm font-medium mb-1">
+                Cover Image URL
+              </Label>
+              <Input
+                type="text"
+                value={newProject.coverImage}
+                onChange={handleCoverImageChange}
+                placeholder="Enter cover image URL"
+                required
+              />
+            </div>
+            <div>
+              <Label className="block text-sm font-medium mb-1">
+                Additional Images URLs
+              </Label>
+              {additionalImageUrls.map((url, index) => (
+                <div key={index} className="flex items-center gap-2 mb-2">
+                  <Input
+                    type="text"
+                    value={url}
+                    onChange={(e) => handleAdditionalImageChange(index, e.target.value)}
+                    placeholder={`Image ${index + 1} URL`}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeAdditionalImageField(index)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
                 </div>
               ))}
+              <Button type="button" variant="outline" onClick={addAdditionalImageField}>
+                Add Image URL
+              </Button>
             </div>
+            <Button type="submit" disabled={isUploading}>
+              {isUploading ? "Adding..." : "Add Project"}
+            </Button>
+          </form>
+        </div>
+        <div>
+          <h2 className="text-2xl font-semibold mb-4">Existing Projects</h2>
+          <div className="space-y-4">
+            {projects.map((project) => (
+              <Card key={project.id} className="p-4">
+                <div className="flex items-start gap-4">
+                  {project.coverImage && (
+                    <img
+                      src={project.coverImage}
+                      alt={project.name}
+                      className="w-24 h-24 object-cover rounded"
+                    />
+                  )}
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold">{project.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {project.description}
+                    </p>
+                    <div className="mt-2">
+                      <p className="text-sm">
+                        Required Talents: {project.requiredTalents.join(", ")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
           </div>
-        </Card>
-
-        <div className="flex justify-center">
-          <Button
-            size="lg"
-            className="gap-2"
-            onClick={() => window.open(project.joinLink, '_blank')}
-          >
-            Join Project Team
-            <ExternalLink className="w-4 h-4" />
-          </Button>
         </div>
       </div>
     </div>
