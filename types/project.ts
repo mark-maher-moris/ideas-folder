@@ -1,3 +1,20 @@
+export type ProjectPhase = 
+  | "Just Idea"
+  | "Team Formation"
+  | "Product Development"
+  | "Go-To-Market"
+  | "Scaling & Operations"
+  | "Profit & Growth"
+  | "Closed & Archived";
+
+export interface TeamMember {
+  name: string;
+  email: string;
+  imageUrl?: string;
+  contactLink?: string;
+  role?: string;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -7,6 +24,8 @@ export interface Project {
   images: string[];
   tags: string[];
   requiredTalents: string[];
+  phase: ProjectPhase;
+  team: TeamMember[];
   createdAt: Date;
   updatedAt: Date;
 }

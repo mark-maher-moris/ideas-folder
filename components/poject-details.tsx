@@ -3,9 +3,20 @@ import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ExternalLink, Users, ChevronLeft, ChevronRight } from "lucide-react";
+import { ExternalLink, Users, ChevronLeft, ChevronRight, Github, Mail, Globe, Link } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Project } from "@/types/project";
+import { Project, ProjectPhase } from "@/types/project";
+import Image from 'next/image';
+
+const phaseColors: Record<ProjectPhase, string> = {
+  "Just Idea": "bg-blue-100 text-blue-800",
+  "Team Formation": "bg-purple-100 text-purple-800",
+  "Product Development": "bg-green-100 text-green-800",
+  "Go-To-Market": "bg-yellow-100 text-yellow-800",
+  "Scaling & Operations": "bg-orange-100 text-orange-800",
+  "Profit & Growth": "bg-emerald-100 text-emerald-800",
+  "Closed & Archived": "bg-gray-100 text-gray-800"
+};
 
 interface ProjectDetailsProps {
   project: Project;
@@ -32,81 +43,18 @@ export function ProjectDetails({ project }: ProjectDetailsProps) {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Left Side: Image */}
-        <div>
-          {(project.coverImage || project.images?.length > 0) && (
-            <Card className="overflow-hidden">
-              <div className="relative aspect-video">
-                {project.coverImage && (
-                  <img
-                    src={project.coverImage}
-                    alt={project.name}
-                    className="w-full h-full object-cover"
-                  />
-                )}
-
-                {project.images && project.images.length > 0 && (
-                  <div className="relative w-full h-full">
-                    <AnimatePresence mode="wait">
-                      <motion.img
-                        key={currentImageIndex}
-                        src={project.images[currentImageIndex]}
-                        alt={`${project.name} - Image ${currentImageIndex + 1}`}
-                        className="absolute inset-0 w-full h-full object-cover"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                      />
-                    </AnimatePresence>
-
-                    {project.images.length > 1 && (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="absolute left-4 top-1/2 transform -translate-y-1/2"
-                          onClick={previousImage}
-                        >
-                          <ChevronLeft className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="absolute right-4 top-1/2 transform -translate-y-1/2"
-                          onClick={nextImage}
-                        >
-                          <ChevronRight className="w-4 h-4" />
-                        </Button>
-
-                        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
-                          {project.images.map((_, index) => (
-                            <button
-                              key={index}
-                              className={`w-2 h-2 rounded-full transition-colors ${
-                                index === currentImageIndex
-                                  ? "bg-primary"
-                                  : "bg-primary/30"
-                              }`}
-                              onClick={() => setCurrentImageIndex(index)}
-                            />
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-            </Card>
-          )}
-        </div>
-
-        {/* Right Side: Details */}
-        <div className="flex flex-col space-y-8">
-          <div>
-            <h1 className="text-4xl font-bold mb-4">{project.name}</h1>
-            <div className="flex flex-wrap gap-2 mb-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          {/* Project Header */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <h1 className="text-4xl font-bold">{project.name}</h1>
+              <Badge className={`text-sm ${phaseColors[project.phase]}`}>
+                {project.phase}
+              </Badge>
+            </div>
+            <p className="text-lg text-muted-foreground">{project.description}</p>
+            <div className="flex flex-wrap gap-2">
               {project.tags.map((tag) => (
                 <Badge key={tag} variant="secondary">
                   {tag}
@@ -115,42 +63,126 @@ export function ProjectDetails({ project }: ProjectDetailsProps) {
             </div>
           </div>
 
-          <Card className="mb-8">
-            <div className="p-6">
-              <h2 className="text-2xl font-semibold mb-4">About this Project</h2>
-              <p className="text-muted-foreground whitespace-pre-wrap">
-                {project.description}
-              </p>
-            </div>
-          </Card>
-
-          <Card className="mb-8">
-            <div className="p-6">
-              <h2 className="text-2xl font-semibold mb-4">Required Talents</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {project.requiredTalents.map((talent, index) => (
-                  <Card
-                    key={index}
-                    className="flex items-center gap-2 p-4 bg-secondary rounded-lg"
-                  >
-                    <Users className="w-5 h-5 text-primary" />
-                    <span>{talent}</span>
-                  </Card>
+          {/* Project Images */}
+          { project.images && project.images.length > 0 && (
+            <div className="space-y-4">
+              <h2 className="text-2xl font-semibold">Project Images</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {project.images.map((image, index) => (
+                  <div key={index} className="relative aspect-video rounded-lg overflow-hidden">
+                    <Image
+                      src={image}
+                      alt={`${project.name} image ${index + 1}`}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
                 ))}
               </div>
             </div>
+          )}
+
+          {/* Required Talents */}
+          <div className="space-y-4">
+            <h2 className="text-2xl font-semibold">Required Talents</h2>
+            <div className="flex flex-wrap gap-2">
+              {project.requiredTalents.map((talent) => (
+                <Badge key={talent} variant="outline">
+                  {talent}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-8">
+          {/* Join Button */}
+          <Card className="p-6">
+            <Button className="w-full" size="lg" asChild>
+              <a href={project.joinLink} target="_blank" rel="noopener noreferrer">
+                Join Project
+                <ExternalLink className="w-4 h-4 ml-2" />
+              </a>
+            </Button>
           </Card>
 
-          <div className="flex justify-start">
-            <Button
-              size="lg"
-              className="gap-2"
-              onClick={() => window.open(project.joinLink, "_blank")}
-            >
-              Join Project Team
-              <ExternalLink className="w-4 h-4" />
-            </Button>
-          </div>
+   {/* Needed For This Project Section */}
+   <Card className="p-6">
+            <h2 className="text-2xl font-semibold mb-4">Needed For This Project</h2>
+            <div className="space-y-4">
+              {(project.requiredTalents || []).map((talent, index) => (
+                <div key={index} className="flex items-center gap-4 p-3 rounded-lg border">
+                
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium truncate">{talent}</h3>
+                   
+                  </div>
+                </div>
+              ))}
+         
+            </div>
+          </Card>
+
+
+
+
+          {/* Team Section */}
+          <Card className="p-6">
+            <h2 className="text-2xl font-semibold mb-4">Current Team Members</h2>
+            <div className="space-y-4">
+              {(project.team || []).map((member, index) => (
+                <div key={index} className="flex items-center gap-4 p-3 rounded-lg border">
+                  {member.imageUrl ? (
+                    <div className="relative w-12 h-12 rounded-full overflow-hidden">
+                      <Image
+                        src={member.imageUrl}
+                        alt={member.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-lg font-semibold text-primary">
+                        {member.name.charAt(0)}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium truncate">{member.name}</h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      {member.contactLink && (
+                        <Button
+                          asChild
+                          variant="ghost"
+                          size="sm"
+                          className="text-muted-foreground hover:text-primary"
+                        > 
+                          <a
+                            href={member.contactLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Link className="w-4 h-4" />
+                          </a>
+                        </Button>
+                      )}
+                      {member.role && (
+                        <Badge variant="secondary" className="text-xs">
+                          {member.role}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {(project.team || []).length === 0 && (
+                <p className="text-center text-muted-foreground py-4">
+                  No team members yet
+                </p>
+              )}
+            </div>
+          </Card>
         </div>
       </div>
     </div>

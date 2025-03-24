@@ -7,7 +7,7 @@ import { Footer } from '@/components/footer';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Project Hub - Collaborative Project Development',
+  title: 'Ideas Folder - Collaborative Project Development',
   description: 'A platform for collaborative project development and idea sharing',
 };
 

@@ -4,7 +4,7 @@ export function Footer() {
       <div className="container py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="font-semibold mb-4">About Project Hub</h3>
+            <h3 className="font-semibold mb-4">About Ideas Folder</h3>
             <p className="text-sm text-muted-foreground">
               A platform for collaborative project development and idea sharing.
             </p>
@@ -60,7 +60,7 @@ export function Footer() {
         </div>
         
         <div className="mt-8 pt-8 border-t text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Project Hub. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Ideas Folder. All rights reserved.</p>
         </div>
       </div>
     </footer>

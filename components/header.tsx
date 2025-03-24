@@ -10,7 +10,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         <Link href="/" className="flex items-center space-x-4 px-6 text-3xl">
-          <span className="font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-black">Project Hub</span>
+          <span className="font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-black">Ideas Folder</span>
         </Link>
         
         <nav className="flex items-center gap-4">
