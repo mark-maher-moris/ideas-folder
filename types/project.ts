@@ -26,6 +26,8 @@ export interface Project {
   requiredTalents: string[];
   phase: ProjectPhase;
   team: TeamMember[];
+  comments: Comment[];
+  suggestedIdeas: SuggestedIdea[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -42,13 +44,21 @@ export interface ProjectSuggestion {
   downvotes: number;
   comments: Comment[];
   createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SuggestedIdea {
+  id: string;
+  title: string;
+  description: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Comment {
   id: string;
-  userId: string;
-  userName: string;
+  author: string;
   content: string;
-  role?: string;
   createdAt: Date;
+  updatedAt: Date;
 }

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
-import { Project, ProjectPhase, TeamMember } from '@/types/project';
+import { Project, ProjectPhase, TeamMember, Comment, SuggestedIdea } from '@/types/project';
 import { BarChart, Users, Activity, X, Plus, Trash2, Pencil, Save } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import {
@@ -45,6 +45,8 @@ export default function AdminDashboard() {
     images: [] as string[],
     phase: 'Just Idea' as ProjectPhase,
     team: [] as TeamMember[],
+    comments: [] as Comment[],
+    suggestedIdeas: [] as SuggestedIdea[],
   });
   const [additionalImageUrls, setAdditionalImageUrls] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -137,6 +139,8 @@ export default function AdminDashboard() {
       images: [],
       phase: 'Just Idea',
       team: [],
+      comments: [],
+      suggestedIdeas: [],
     });
     setAdditionalImageUrls([]);
     setNewTeamMember({
@@ -157,6 +161,8 @@ export default function AdminDashboard() {
       ...project,
       tags: project.tags || [],
       requiredTalents: project.requiredTalents || [],
+      comments: project.comments || [],
+      suggestedIdeas: project.suggestedIdeas || [],
     });
     setAdditionalImageUrls(project.images || []);
   };

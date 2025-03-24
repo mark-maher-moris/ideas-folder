@@ -101,7 +101,7 @@ export function ProjectDetails({ project }: ProjectDetailsProps) {
             <Button className="w-full" size="lg" asChild>
               <a href={project.joinLink} target="_blank" rel="noopener noreferrer">
                 Join Project
-                <ExternalLink className="w-4 h-4 ml-2" />
+                {/* <ExternalLink className="w-4 h-4 ml-2" /> */}
               </a>
             </Button>
           </Card>

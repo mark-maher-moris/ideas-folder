@@ -37,13 +37,15 @@ export function ProjectCard({ project }: ProjectCardProps) {
               <Folder className="w-12 h-12 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
+            <Badge className={`text-xs ${phaseColors[project.phase]}`}>
+                  {project.phase}
+                </Badge>
               <div className="flex items-center gap-2 mb-1">
+            
                 <h3 className="text-lg font-semibold truncate group-hover:text-primary transition-colors">
                   {project.name}
                 </h3>
-                <Badge className={`text-xs ${phaseColors[project.phase]}`}>
-                  {project.phase}
-                </Badge>
+             
               </div>
               <p className="text-sm text-muted-foreground line-clamp-2">
                 {project.description}
