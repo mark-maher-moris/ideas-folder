@@ -1,11 +1,21 @@
 "use client";
 
-import { Project } from '@/types/project';
+import { Project, ProjectPhase } from '@/types/project';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import { Folder, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+
+const phaseColors: Record<ProjectPhase, string> = {
+  "Just Idea": "bg-blue-100 text-blue-800",
+  "Team Formation": "bg-purple-100 text-purple-800",
+  "Product Development": "bg-green-100 text-green-800",
+  "Go-To-Market": "bg-yellow-100 text-yellow-800",
+  "Scaling & Operations": "bg-orange-100 text-orange-800",
+  "Profit & Growth": "bg-emerald-100 text-emerald-800",
+  "Closed & Archived": "bg-gray-100 text-gray-800"
+};
 
 interface ProjectCardProps {
   project: Project;
@@ -22,31 +32,36 @@ export function ProjectCard({ project }: ProjectCardProps) {
         />
         
         <div className="p-6">
-          <div className="flex items-start gap-4 mb-4">
-            <Folder className="w-8 h-8 text-primary" />
-            <div className="flex-1">
-              <h3 className="text-xl font-semibold group-hover:text-primary transition-colors">
-                {project.name}
-              </h3>
-              <p className="text-muted-foreground line-clamp-2 mt-1">
+          <div className="flex items-center gap-4">
+            <div className="flex-shrink-0">
+              <Folder className="w-12 h-12 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-lg font-semibold truncate group-hover:text-primary transition-colors">
+                  {project.name}
+                </h3>
+                <Badge className={`text-xs ${phaseColors[project.phase]}`}>
+                  {project.phase}
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground line-clamp-2">
                 {project.description}
               </p>
+              <div className="flex flex-wrap gap-1 mt-2">
+                {project.tags.slice(0, 2).map((tag) => (
+                  <Badge key={tag} variant="secondary" className="text-xs">
+                    {tag}
+                  </Badge>
+                ))}
+                {project.tags.length > 2 && (
+                  <Badge variant="secondary" className="text-xs">
+                    +{project.tags.length - 2} more
+                  </Badge>
+                )}
+              </div>
             </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2 mb-4">
-            {project.tags.map((tag) => (
-              <Badge key={tag} variant="secondary">
-                {tag}
-              </Badge>
-            ))}
-          </div>
-
-          <div className="flex items-center justify-between mt-4">
-            <div className="text-sm text-muted-foreground">
-              {project.requiredTalents.length} roles needed
-            </div>
-            <ArrowRight className="w-5 h-5 text-primary transform group-hover:translate-x-1 transition-transform" />
+            <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
           </div>
         </div>
       </Card>

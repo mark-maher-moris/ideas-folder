@@ -1,6 +1,6 @@
 import { FirebaseApp, initializeApp, getApps } from 'firebase/app';
 import { Firestore, getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
+// import { getStorage } from 'firebase/storage';
 import { Analytics, getAnalytics, isSupported } from 'firebase/analytics';
 
 const firebaseConfig = {
@@ -13,6 +13,7 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
+// Ensure Firebase config is valid before initializing
 const isFirebaseConfigured = Object.values(firebaseConfig).every(value => Boolean(value));
 
 if (!isFirebaseConfigured) {
@@ -21,13 +22,10 @@ if (!isFirebaseConfigured) {
 
 const app: FirebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const db: Firestore = getFirestore(app);
-
-let storage: ReturnType<typeof getStorage> | null = null;
-if (typeof window !== 'undefined') {
-  storage = getStorage(app); // ✅ Ensure storage is only loaded in the browser
-}
-
+// const storage = getStorage(app); // ✅ Corrected storage typing
 let analytics: Analytics | null = null;
+
+// Only initialize analytics in the browser
 if (typeof window !== 'undefined') {
   isSupported().then((supported) => {
     if (supported) {
@@ -36,4 +34,4 @@ if (typeof window !== 'undefined') {
   });
 }
 
-export { app, db, storage, analytics };
+export { app, db, analytics };

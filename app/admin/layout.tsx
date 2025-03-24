@@ -27,7 +27,7 @@ export default function AdminLayout({
   
     try {
       // Fetch the stored passwords
-      const adminDocRef = doc(db, 'jadmin', 'jauth');
+      const adminDocRef = doc(db, 'admin', 'auth');
       const adminDoc = await getDoc(adminDocRef);
   
       if (!adminDoc.exists()) {
