@@ -56,6 +56,7 @@ export default function AdminDashboard() {
     imageUrl: '',
     contactLink: '',
     role: '',
+    shares: 0,
   });
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
@@ -149,6 +150,8 @@ export default function AdminDashboard() {
       imageUrl: '',
       contactLink: '',
       role: '',
+      shares: 0,
+
     });
     setNewTag('');
     setNewTalent('');
@@ -212,6 +215,8 @@ export default function AdminDashboard() {
         imageUrl: '',
         contactLink: '',
         role: '',
+        shares: 0,
+
       });
     }
   };
@@ -489,6 +494,12 @@ export default function AdminDashboard() {
                   value={newTeamMember.email}
                   onChange={(e) => setNewTeamMember({ ...newTeamMember, email: e.target.value })}
                 />
+                    <Input
+        type="number"
+        value={newTeamMember.shares}
+        onChange={(e) => setNewTeamMember({ ...newTeamMember, shares: parseInt(e.target.value) })}
+        placeholder="Shares"
+      />
                 <Input
                   placeholder="Team member image URL (optional)"
                   value={newTeamMember.imageUrl}

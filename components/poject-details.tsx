@@ -152,6 +152,11 @@ export function ProjectDetails({ project }: ProjectDetailsProps) {
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium truncate">{member.name}</h3>
                     <div className="flex items-center gap-2 mt-1">
+                    <p className="text-xs">
+                      Shares: {member.shares || 0} (
+                      {((member.shares / 100) * 100).toFixed(1)}%)
+                    </p>
+
                       {member.contactLink && (
                         <Button
                           asChild

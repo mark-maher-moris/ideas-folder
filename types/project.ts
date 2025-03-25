@@ -14,6 +14,7 @@ export interface TeamMember {
   imageUrl?: string;
   contactLink?: string;
   role?: string;
+  shares: number
 }
 
 export interface Project {
