@@ -5,7 +5,8 @@ export type ProjectPhase =
   | "Go-To-Market"
   | "Scaling & Operations"
   | "Profit & Growth"
-  | "Closed & Archived";
+  | "Closed & Archived"
+  | "Unicorn";
 
 export interface TeamMember {
   name: string;

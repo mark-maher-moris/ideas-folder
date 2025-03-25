@@ -15,7 +15,8 @@ const phaseColors: Record<ProjectPhase, string> = {
   "Go-To-Market": "bg-yellow-100 text-yellow-800",
   "Scaling & Operations": "bg-orange-100 text-orange-800",
   "Profit & Growth": "bg-emerald-100 text-emerald-800",
-  "Closed & Archived": "bg-gray-100 text-gray-800"
+  "Closed & Archived": "bg-gray-100 text-gray-800",
+  "Unicorn": "bg-rose-100 text-rose-800"
 };
 
 interface ProjectDetailsProps {

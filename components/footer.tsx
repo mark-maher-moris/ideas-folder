@@ -18,11 +18,7 @@ export function Footer() {
                   Browse Projects
                 </a>
               </li>
-              <li>
-                <a href="/ideas" className="text-muted-foreground hover:text-foreground">
-                  Suggested Ideas
-                </a>
-              </li>
+             
             </ul>
           </div>
           
@@ -34,11 +30,7 @@ export function Footer() {
                   Documentation
                 </a>
               </li>
-              <li>
-                <a href="/guidelines" className="text-muted-foreground hover:text-foreground">
-                  Guidelines
-                </a>
-              </li>
+            
             </ul>
           </div>
           
@@ -50,11 +42,7 @@ export function Footer() {
                   GitHub
                 </a>
               </li>
-              <li>
-                <a href="https://discord.com" className="text-muted-foreground hover:text-foreground">
-                  Discord
-                </a>
-              </li>
+        
             </ul>
           </div>
         </div>
