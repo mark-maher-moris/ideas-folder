@@ -50,7 +50,7 @@ export default function Home() {
           <>
            <HomeAnalytics projects={[...projects]} />
             <section className="mb-12">
-              <h2 className="text-2xl font-semibold mb-6">Active Projects</h2>
+              <h2 className="text-2xl font-semibold mb-6">All Projects</h2>
               <ProjectGrid   projects={[...projects]}/>
             </section>
             <div className="border-t border-muted-foreground my-12" />
