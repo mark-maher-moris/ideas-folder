@@ -32,6 +32,11 @@ export interface Project {
   suggestedIdeas: SuggestedIdea[];
   createdAt: Date;
   updatedAt: Date;
+  encrypted:boolean;
+  investors:TeamMember[];
+  profit: number;
+  loss: number;
+  financialHistory: FinancialRecord[];
 }
 
 export interface ProjectSuggestion {
@@ -63,4 +68,12 @@ export interface Comment {
   content: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface FinancialRecord {
+  id: string;
+  date: Date;
+  amount: number;
+  isProfit: boolean;
+  description: string;
 }
