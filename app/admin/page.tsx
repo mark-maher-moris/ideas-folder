@@ -138,7 +138,8 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleFinancialRecordSubmit = (e: React.FormEvent) => {
+  const handleFinancialRecordSubmit = (e: React.MouseEvent | React.FormEvent) => {
+    // Prevent default form submission behavior
     e.preventDefault();
     
     if (!newFinancialRecord.amount || !newFinancialRecord.description) {
@@ -662,7 +663,7 @@ export default function AdminDashboard() {
               
               <div className="bg-muted/50 p-4 rounded-lg">
                 <h4 className="font-medium mb-2">Add Financial Record</h4>
-                <form onSubmit={handleFinancialRecordSubmit} className="space-y-4">
+                <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="amount">Amount ($)</Label>
@@ -710,10 +711,18 @@ export default function AdminDashboard() {
                       required
                     />
                   </div>
-                  <Button type="submit" variant="outline" className="w-full">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleFinancialRecordSubmit(e);
+                    }}
+                  >
                     Add Record
                   </Button>
-                </form>
+                </div>
               </div>
             </div>
 

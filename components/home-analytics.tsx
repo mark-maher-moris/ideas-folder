@@ -19,38 +19,38 @@ export default function HomeAnalytics({ projects }: { projects: Project[] }) {
 
     return (
         <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <Card className="p-4 h-20">
-                    <div className="flex items-center gap-4">
-                        <img src="/ideas_folder.png" alt="Ideas Folder" className="h-12 w-auto" />
-                        <div>
-                            <p className="text-sm text-muted-foreground">Ideas Folder</p>
-                            <p className="text-lg font-bold">{projects.filter(p => p.phase === "Just Idea").length}</p>
-                        </div>
+<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <Card className="p-6 h-32">
+                <div className="flex items-center gap-6">
+                    <img src="/ideas_folder.png" alt="Ideas Folder" className="h-20 w-auto" />  {/* Increased image height */}
+                    <div>
+                        <p className="text-md text-muted-foreground">Ideas Folder</p>
+                        <p className="text-xl font-bold">{projects.filter(p => p.phase === "Just Idea").length}</p>
                     </div>
-                </Card>
-                <Card className="p-4 h-20">
-                    <div className="flex items-center gap-4">
-                        <img src="/startups_folder.png" alt="Ideas Folder" className="h-12 w-auto" />
-                        <div>
-                            <p className="text-sm text-muted-foreground">Startups Folder</p>
-                            <p className="text-lg font-bold">{projects.filter(p => ["Product Development", "Go-To-Market", "Scaling & Operations", "Profit & Growth"].includes(p.phase)).length}</p>
-                        </div>
+                </div>
+            </Card>
+            <Card className="p-6 h-32">
+                <div className="flex items-center gap-6">
+                    <img src="/startups_folder.png" alt="Ideas Folder" className="h-20 w-auto" />  {/* Increased image height */}
+                    <div>
+                        <p className="text-md text-muted-foreground">Startups Folder</p>
+                        <p className="text-xl font-bold">{projects.filter(p => ["Product Development", "Go-To-Market", "Scaling & Operations", "Profit & Growth"].includes(p.phase)).length}</p>
                     </div>
-                </Card>
-                <Card className="p-4 h-20">
-                    <div className="flex items-center gap-4">
-                        <img src="/unicorns_folder.png" alt="Ideas Folder" className="h-12 w-auto" />
-                        <div>
-                            <p className="text-sm text-muted-foreground">Unicorn Folder</p>
-                            <p className="text-lg font-bold">{projects.filter(p => p.phase === "Unicorn").length}</p>
-                        </div>
+                </div>
+            </Card>
+            <Card className="p-6 h-32">
+                <div className="flex items-center gap-6">
+                    <img src="/unicorns_folder.png" alt="Ideas Folder" className="h-20 w-auto" /> {/* Increased image height */}
+                    <div>
+                        <p className="text-md text-muted-foreground">Unicorn Folder</p>
+                        <p className="text-xl font-bold">{projects.filter(p => p.phase === "Unicorn").length}</p>
                     </div>
-                </Card>
-            </div>
-
+                </div>
+            </Card>
+        </div>
+     
             {/* Financial Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <Card className="p-4 h-20">
                     <div className="flex items-center gap-4">
                         <ArrowUpCircle className="h-12 w-12 text-green-500" />
@@ -84,9 +84,9 @@ export default function HomeAnalytics({ projects }: { projects: Project[] }) {
                         </div>
                     </div>
                 </Card>
-            </div>
+            </div> */}
 
-            {/* Financial Chart */}
+            {/* Financial Chart
             {financialData.length > 0 && (
                 <Card className="p-4 mb-8">
                     <h3 className="text-lg font-semibold mb-4">Financial Performance (Top 5 Projects)</h3>
@@ -108,7 +108,7 @@ export default function HomeAnalytics({ projects }: { projects: Project[] }) {
                         </ResponsiveContainer>
                     </div>
                 </Card>
-            )}
+            )} */}
         </>
     )
 }

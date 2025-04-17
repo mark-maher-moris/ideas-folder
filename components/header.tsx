@@ -9,10 +9,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from "./ui/dropdown-menu";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useState, useEffect } from "react";
+import { ThemeToggle } from "./theme-toggle";
 
 export function Header() {
   const { isSignedIn, userId } = useAuth();
@@ -45,49 +47,56 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-20 items-center justify-between">
         <Link href="/" className="flex items-center space-x-4 px-6 text-3xl">
-          <img src="/my_folders.png" alt="Ideas Folder" className="h-28 w-auto" />
+        <picture>
+  <source srcset="/my_folders_dark.png" media="(prefers-color-scheme: dark)" />
+  <img src="/my_folders.png" alt="My Folders" className="h-28 w-auto" />
+</picture>
         </Link>
         
         <nav className="flex items-center gap-4">
           {isMobile ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <User className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href="/projects">Projects</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/ideas">Ideas</Link>
-                </DropdownMenuItem>
-                {isAdmin && (
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <User className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
                   <DropdownMenuItem asChild>
-                    <Link href="/admin">Admin</Link>
+                    <Link href="/projects">Projects</Link>
                   </DropdownMenuItem>
-                )}
-                <DropdownMenuItem>
-                  <SuggestProjectDialog />
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  {isSignedIn ? (
-                    <div className="flex w-full items-center justify-between">
-                      <span>Account</span>
-                      <UserButton afterSignOutUrl="/" />
-                    </div>
-                  ) : (
-                    <SignInButton mode="modal">
-                      <Button variant="ghost" size="sm" className="w-full justify-start">
-                        <LogIn className="mr-2 h-4 w-4" />
-                        Sign In
-                      </Button>
-                    </SignInButton>
+                  <DropdownMenuItem asChild>
+                    <Link href="/ideas">Ideas</Link>
+                  </DropdownMenuItem>
+                  {isAdmin && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin">Admin</Link>
+                    </DropdownMenuItem>
                   )}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <DropdownMenuItem>
+                    <SuggestProjectDialog />
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    {isSignedIn ? (
+                      <div className="flex w-full items-center justify-between">
+                        <span>Account</span>
+                        <UserButton afterSignOutUrl="/" />
+                      </div>
+                    ) : (
+                      <SignInButton mode="modal">
+                        <Button variant="ghost" size="sm" className="w-full justify-start">
+                          <LogIn className="mr-2 h-4 w-4" />
+                          Sign In
+                        </Button>
+                      </SignInButton>
+                    )}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           ) : (
             <>
               <Link href="/projects" className="text-sm font-medium hover:text-primary">
@@ -106,6 +115,8 @@ export function Header() {
               )}
               
               <SuggestProjectDialog />
+              
+              <ThemeToggle />
               
               {isSignedIn ? (
                 <div className="flex items-center gap-2">
