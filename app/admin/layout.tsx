@@ -10,7 +10,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [password1, setPassword1] = useState('');
   const [password2, setPassword2] = useState('');
   const router = useRouter();
@@ -18,8 +18,6 @@ export default function AdminLayout({
   const [attemptCount, setAttemptCount] = useState(0);
   const maxAttempts = 5;
   const verifyPasswords = async () => {
-    console.log("Entered Passwords:", password1, password2);
-    
     if (!db) {
       alert("Database not initialized.");
       return;
@@ -27,7 +25,7 @@ export default function AdminLayout({
   
     try {
       // Fetch the stored passwords
-      const adminDocRef = doc(db, 'admin', 'auth');
+      const adminDocRef = doc(db, 'jadmin', 'jauth');
       const adminDoc = await getDoc(adminDocRef);
   
       if (!adminDoc.exists()) {
@@ -42,7 +40,6 @@ export default function AdminLayout({
         setIsAuthenticated(true);
         localStorage.setItem('adminAuth', 'true');
         setAttemptCount(0);
-        console.log("Authentication successful!");
       } else {
         setAttemptCount((prev) => prev + 1);
         if (attemptCount + 1 >= maxAttempts) {
@@ -58,9 +55,17 @@ export default function AdminLayout({
   };
   
   useEffect(() => {
+    // Only run on client-side
     const isAdmin = localStorage.getItem('adminAuth') === 'true';
     setIsAuthenticated(isAdmin);
   }, []);
+
+  // Show loading state until authentication is determined
+  if (isAuthenticated === null) {
+    return <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+    </div>;
+  }
 
   if (!isAuthenticated) {
     return (

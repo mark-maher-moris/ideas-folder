@@ -1,22 +1,22 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card } from '@/components/ui/card';
-import { Project, ProjectPhase, TeamMember } from '@/types/project';
-import { BarChart, Users, Activity, X, Plus, Trash2, Pencil, Save } from 'lucide-react';
-import { Label } from '@/components/ui/label';
-import {
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from '@/components/ui/badge';
+  SelectValue
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Card } from '@/components/ui/card';
+import { Project, ProjectPhase, TeamMember, Comment, SuggestedIdea, FinancialRecord } from '@/types/project';
+import { BarChart, Users, Activity, X, Plus, Trash2, Pencil, Save } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from '@/components/ui/badge';
 
 export default function AdminDashboard() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -45,6 +46,11 @@ export default function AdminDashboard() {
     images: [] as string[],
     phase: 'Just Idea' as ProjectPhase,
     team: [] as TeamMember[],
+    comments: [] as Comment[],
+    suggestedIdeas: [] as SuggestedIdea[],
+    profit: 0,
+    loss: 0,
+    financialHistory: [] as FinancialRecord[],
   });
   const [additionalImageUrls, setAdditionalImageUrls] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -54,11 +60,17 @@ export default function AdminDashboard() {
     imageUrl: '',
     contactLink: '',
     role: '',
+    shares: 0,
   });
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
   const [newTag, setNewTag] = useState('');
   const [newTalent, setNewTalent] = useState('');
+  const [newFinancialRecord, setNewFinancialRecord] = useState<Omit<FinancialRecord, 'id' | 'date'>>({
+    amount: 0,
+    isProfit: true,
+    description: ''
+  });
 
   useEffect(() => {
     fetchProjects();
@@ -126,6 +138,68 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleFinancialRecordSubmit = (e: React.MouseEvent | React.FormEvent) => {
+    // Prevent default form submission behavior
+    e.preventDefault();
+    
+    if (!newFinancialRecord.amount || !newFinancialRecord.description) {
+      return;
+    }
+    
+    const financialRecord: FinancialRecord = {
+      ...newFinancialRecord,
+      id: Date.now().toString(),
+      date: new Date()
+    };
+    
+    const updatedFinancialHistory = [...newProject.financialHistory, financialRecord];
+    
+    // Update total profit or loss
+    let updatedProfit = newProject.profit;
+    let updatedLoss = newProject.loss;
+    
+    if (financialRecord.isProfit) {
+      updatedProfit += financialRecord.amount;
+    } else {
+      updatedLoss += financialRecord.amount;
+    }
+    
+    setNewProject({
+      ...newProject,
+      financialHistory: updatedFinancialHistory,
+      profit: updatedProfit,
+      loss: updatedLoss
+    });
+    
+    setNewFinancialRecord({
+      amount: 0,
+      isProfit: true,
+      description: ''
+    });
+  };
+
+  const removeFinancialRecord = (index: number) => {
+    const recordToRemove = newProject.financialHistory[index];
+    const updatedFinancialHistory = newProject.financialHistory.filter((_, i) => i !== index);
+    
+    // Update total profit or loss
+    let updatedProfit = newProject.profit;
+    let updatedLoss = newProject.loss;
+    
+    if (recordToRemove.isProfit) {
+      updatedProfit -= recordToRemove.amount;
+    } else {
+      updatedLoss -= recordToRemove.amount;
+    }
+    
+    setNewProject({
+      ...newProject,
+      financialHistory: updatedFinancialHistory,
+      profit: updatedProfit,
+      loss: updatedLoss
+    });
+  };
+
   const resetForm = () => {
     setNewProject({
       name: '',
@@ -137,6 +211,11 @@ export default function AdminDashboard() {
       images: [],
       phase: 'Just Idea',
       team: [],
+      comments: [],
+      suggestedIdeas: [],
+      profit: 0,
+      loss: 0,
+      financialHistory: [],
     });
     setAdditionalImageUrls([]);
     setNewTeamMember({
@@ -145,10 +224,17 @@ export default function AdminDashboard() {
       imageUrl: '',
       contactLink: '',
       role: '',
+      shares: 0,
+
     });
     setNewTag('');
     setNewTalent('');
     setEditingProject(null);
+    setNewFinancialRecord({
+      amount: 0,
+      isProfit: true,
+      description: ''
+    });
   };
 
   const handleEditProject = (project: Project) => {
@@ -157,6 +243,8 @@ export default function AdminDashboard() {
       ...project,
       tags: project.tags || [],
       requiredTalents: project.requiredTalents || [],
+      comments: project.comments || [],
+      suggestedIdeas: project.suggestedIdeas || [],
     });
     setAdditionalImageUrls(project.images || []);
   };
@@ -206,6 +294,8 @@ export default function AdminDashboard() {
         imageUrl: '',
         contactLink: '',
         role: '',
+        shares: 0,
+
       });
     }
   };
@@ -483,6 +573,12 @@ export default function AdminDashboard() {
                   value={newTeamMember.email}
                   onChange={(e) => setNewTeamMember({ ...newTeamMember, email: e.target.value })}
                 />
+                    <Input
+        type="number"
+        value={newTeamMember.shares}
+        onChange={(e) => setNewTeamMember({ ...newTeamMember, shares: parseInt(e.target.value) })}
+        placeholder="Shares"
+      />
                 <Input
                   placeholder="Team member image URL (optional)"
                   value={newTeamMember.imageUrl}
@@ -507,6 +603,126 @@ export default function AdminDashboard() {
                   <Plus className="w-4 h-4 mr-2" />
                   Add Team Member
                 </Button>
+              </div>
+            </div>
+
+            {/* Financial Information */}
+            <div className="mb-8">
+              <h3 className="text-lg font-bold mb-4">Financial Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <Label htmlFor="total-profit">Total Profit</Label>
+                  <Input
+                    id="total-profit"
+                    value={`$${newProject.profit.toLocaleString()}`}
+                    disabled
+                    className="bg-muted"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="total-loss">Total Loss</Label>
+                  <Input
+                    id="total-loss"
+                    value={`$${newProject.loss.toLocaleString()}`}
+                    disabled
+                    className="bg-muted"
+                  />
+                </div>
+              </div>
+              
+              <div className="mb-4">
+                <Label>Financial Records</Label>
+                {newProject.financialHistory.length > 0 ? (
+                  <div className="space-y-2 mt-2">
+                    {newProject.financialHistory.map((record, index) => (
+                      <div key={record.id} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                        <div>
+                          <span className={record.isProfit ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+                            {record.isProfit ? '+' : '-'}${record.amount.toLocaleString()}
+                          </span>
+                          <span className="mx-2">-</span>
+                          <span>{record.description}</span>
+                          <span className="text-xs text-muted-foreground ml-2">
+                            {record.date.toLocaleDateString()}
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeFinancialRecord(index)}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground mt-2">No financial records added yet.</p>
+                )}
+              </div>
+              
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <h4 className="font-medium mb-2">Add Financial Record</h4>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="amount">Amount ($)</Label>
+                      <Input
+                        id="amount"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={newFinancialRecord.amount}
+                        onChange={(e) => setNewFinancialRecord({
+                          ...newFinancialRecord,
+                          amount: parseFloat(e.target.value) || 0
+                        })}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="is-profit">Type</Label>
+                      <Select
+                        value={newFinancialRecord.isProfit ? "profit" : "loss"}
+                        onValueChange={(value) => setNewFinancialRecord({
+                          ...newFinancialRecord,
+                          isProfit: value === "profit"
+                        })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="profit">Profit</SelectItem>
+                          <SelectItem value="loss">Loss</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="description">Description</Label>
+                    <Input
+                      id="description"
+                      value={newFinancialRecord.description}
+                      onChange={(e) => setNewFinancialRecord({
+                        ...newFinancialRecord,
+                        description: e.target.value
+                      })}
+                      required
+                    />
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleFinancialRecordSubmit(e);
+                    }}
+                  >
+                    Add Record
+                  </Button>
+                </div>
               </div>
             </div>
 

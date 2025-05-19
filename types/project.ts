@@ -5,7 +5,8 @@ export type ProjectPhase =
   | "Go-To-Market"
   | "Scaling & Operations"
   | "Profit & Growth"
-  | "Closed & Archived";
+  | "Closed & Archived"
+  | "Unicorn";
 
 export interface TeamMember {
   name: string;
@@ -13,6 +14,7 @@ export interface TeamMember {
   imageUrl?: string;
   contactLink?: string;
   role?: string;
+  shares: number
 }
 
 export interface Project {
@@ -26,8 +28,15 @@ export interface Project {
   requiredTalents: string[];
   phase: ProjectPhase;
   team: TeamMember[];
+  comments: Comment[];
+  suggestedIdeas: SuggestedIdea[];
   createdAt: Date;
   updatedAt: Date;
+  encrypted:boolean;
+  investors:TeamMember[];
+  profit: number;
+  loss: number;
+  financialHistory: FinancialRecord[];
 }
 
 export interface ProjectSuggestion {
@@ -42,13 +51,29 @@ export interface ProjectSuggestion {
   downvotes: number;
   comments: Comment[];
   createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SuggestedIdea {
+  id: string;
+  title: string;
+  description: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Comment {
   id: string;
-  userId: string;
-  userName: string;
+  author: string;
   content: string;
-  role?: string;
   createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface FinancialRecord {
+  id: string;
+  date: Date;
+  amount: number;
+  isProfit: boolean;
+  description: string;
 }

@@ -8,7 +8,38 @@ import { ProjectDetails } from "@/components/poject-details";
 async function fetchProject(id: string) {
   const projectDoc = await getDoc(doc(db, "projects", id));
   if (projectDoc.exists()) {
-    return { id: projectDoc.id, ...projectDoc.data() } as Project;
+    const data = projectDoc.data();
+    return {
+      id: projectDoc.id,
+      ...data,
+      // Convert Firebase timestamps to Date objects if they exist
+      createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
+      updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(),
+      
+      // Process comments to ensure dates are converted
+      comments: (data.comments || []).map((comment: any) => ({
+        ...comment,
+        createdAt: comment.createdAt?.toDate ? comment.createdAt.toDate() : new Date(),
+        updatedAt: comment.updatedAt?.toDate ? comment.updatedAt.toDate() : new Date(),
+      })),
+      
+      // Process suggested ideas to ensure dates are converted
+      suggestedIdeas: (data.suggestedIdeas || []).map((idea: any) => ({
+        ...idea,
+        createdAt: idea.createdAt?.toDate ? idea.createdAt.toDate() : new Date(),
+        updatedAt: idea.updatedAt?.toDate ? idea.updatedAt.toDate() : new Date(),
+      })),
+      
+      // Process financial history to ensure dates are converted
+      financialHistory: (data.financialHistory || []).map((record: any) => ({
+        ...record,
+        date: record.date?.toDate ? record.date.toDate() : new Date(),
+      })),
+      
+      // Ensure other fields have default values if needed
+      profit: data.profit || 0,
+      loss: data.loss || 0,
+    } as Project;
   }
   return null;
 }

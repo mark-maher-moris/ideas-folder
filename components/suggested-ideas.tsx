@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { collection, getDocs, query, where, orderBy, updateDoc, doc, arrayUnion } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, updateDoc, doc, arrayUnion, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { ProjectSuggestion } from '@/types/project';
 import { Card } from '@/components/ui/card';
@@ -11,12 +11,14 @@ import { ThumbsUp, ThumbsDown, MessageSquare, Send } from 'lucide-react';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
+import { formatDistanceToNow } from 'date-fns';
 
 export function SuggestedIdeas() {
   const [suggestions, setSuggestions] = useState<ProjectSuggestion[]>([]);
   const [showComments, setShowComments] = useState<{ [key: string]: boolean }>({});
   const [newComments, setNewComments] = useState<{ [key: string]: string }>({});
   const [commentUserNames, setCommentUserNames] = useState<{ [key: string]: string }>({});
+
 
   useEffect(() => {
     fetchSuggestions();
@@ -30,10 +32,20 @@ export function SuggestedIdeas() {
       orderBy('upvotes', 'desc')
     );
     const suggestionsSnapshot = await getDocs(q);
-    const suggestionsList = suggestionsSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as ProjectSuggestion));
+    const suggestionsList = suggestionsSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate() || new Date(),
+        updatedAt: data.updatedAt?.toDate() || new Date(),
+        comments: data.comments?.map((comment: any) => ({
+          ...comment,
+          createdAt: comment.createdAt?.toDate() || new Date(),
+          updatedAt: comment.updatedAt?.toDate() || new Date(),
+        })) || [],
+      } as ProjectSuggestion;
+    });
     setSuggestions(suggestionsList);
   };
 
@@ -46,7 +58,8 @@ export function SuggestedIdeas() {
 
       const updates = {
         upvotes: suggestion.upvotes + (voteType === 'up' ? 1 : 0),
-        downvotes: suggestion.downvotes + (voteType === 'down' ? 1 : 0)
+        downvotes: suggestion.downvotes + (voteType === 'down' ? 1 : 0),
+        updatedAt: Timestamp.now()
       };
 
       await updateDoc(suggestionRef, updates);
@@ -70,14 +83,15 @@ export function SuggestedIdeas() {
       const suggestionRef = doc(db!, 'projectSuggestions', suggestionId);
       const comment = {
         id: Date.now().toString(),
-        userId: 'anonymous', // In a real app, this would be the actual user ID
-        userName: commentUserNames[suggestionId],
+        author: commentUserNames[suggestionId],
         content: newComments[suggestionId],
-        createdAt: new Date()
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now()
       };
 
       await updateDoc(suggestionRef, {
-        comments: arrayUnion(comment)
+        comments: arrayUnion(comment),
+        updatedAt: Timestamp.now()
       });
 
       // Clear the input fields and refresh suggestions
@@ -95,14 +109,19 @@ export function SuggestedIdeas() {
         <Card key={suggestion.id} className="p-6">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="text-xl font-semibold mb-2">
-                {suggestion.projectSuggestedName}
-              </h3>
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="text-xl font-semibold">
+                  {suggestion.projectSuggestedName}
+                </h3>
+                <span className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(suggestion.createdAt, { addSuffix: true })}
+                </span>
+              </div>
               <p className="text-muted-foreground mb-4">
                 {suggestion.ideaDescription}
               </p>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>Suggested by {suggestion.suggesterName}</span>
+                <span>Idea by {suggestion.suggesterName}</span>
                 {suggestion.wantToWork && (
                   <Badge variant="secondary">Wants to Work</Badge>
                 )}
@@ -146,10 +165,10 @@ export function SuggestedIdeas() {
               <div className="space-y-4 mb-4">
                 {suggestion.comments.map((comment) => (
                   <div key={comment.id} className="bg-muted p-3 rounded-lg">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-medium">{comment.userName}</span>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-medium">{comment.author}</span>
                       <span className="text-xs text-muted-foreground">
-                        {new Date(comment.createdAt).toLocaleDateString()}
+                        {formatDistanceToNow(comment.createdAt, { addSuffix: true })}
                       </span>
                     </div>
                     <p className="text-sm">{comment.content}</p>

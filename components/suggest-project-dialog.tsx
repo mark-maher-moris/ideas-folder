@@ -7,7 +7,7 @@ import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
 import { Checkbox } from "./ui/checkbox";
-import { addDoc, collection } from "firebase/firestore";
+import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { PlusCircle } from "lucide-react";
 
@@ -32,7 +32,8 @@ export function SuggestProjectDialog() {
         upvotes: 0,
         downvotes: 0,
         comments: [],
-        createdAt: new Date(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       });
 
       setFormData({
