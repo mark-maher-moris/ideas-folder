@@ -1,23 +1,77 @@
-// Temporary placeholder page to allow build to complete
+// Server Component
+import { Project } from "@/types/project";
+import { getDoc, doc, getDocs, collection } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { ProjectDetails } from "@/components/poject-details";
 
-// This function is required for static site generation with dynamic routes
-export function generateStaticParams() {
-  // For now, we'll just pre-render a single placeholder project page
-  // In a real app, this would fetch all project IDs from a data source
-  return [
-    { id: 'placeholder' }
-  ];
+// Fetch project data based on ID
+async function fetchProject(id: string) {
+  const projectDoc = await getDoc(doc(db, "projects", id));
+  if (projectDoc.exists()) {
+    const data = projectDoc.data();
+    return {
+      id: projectDoc.id,
+      ...data,
+      // Convert Firebase timestamps to Date objects if they exist
+      createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
+      updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(),
+      
+      // Process comments to ensure dates are converted
+      comments: (data.comments || []).map((comment: any) => ({
+        ...comment,
+        createdAt: comment.createdAt?.toDate ? comment.createdAt.toDate() : new Date(),
+        updatedAt: comment.updatedAt?.toDate ? comment.updatedAt.toDate() : new Date(),
+      })),
+      
+      // Process suggested ideas to ensure dates are converted
+      suggestedIdeas: (data.suggestedIdeas || []).map((idea: any) => ({
+        ...idea,
+        createdAt: idea.createdAt?.toDate ? idea.createdAt.toDate() : new Date(),
+        updatedAt: idea.updatedAt?.toDate ? idea.updatedAt.toDate() : new Date(),
+      })),
+      
+      // Process financial history to ensure dates are converted
+      financialHistory: (data.financialHistory || []).map((record: any) => ({
+        ...record,
+        date: record.date?.toDate ? record.date.toDate() : new Date(),
+      })),
+      
+      // Ensure other fields have default values if needed
+      profit: data.profit || 0,
+      loss: data.loss || 0,
+    } as Project;
+  }
+  return null;
 }
 
-export default function ProjectPage() {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold">Project Details</h1>
-        <p className="mt-4 text-muted-foreground">
-          This page is temporarily unavailable while we update our deployment process.
-        </p>
+// Generate static params for all projects
+export async function generateStaticParams() {
+  try {
+    const projectsSnapshot = await getDocs(collection(db, "projects"));
+    const projectIds = projectsSnapshot.docs.map((doc) => ({
+      id: doc.id,
+    }));
+    return projectIds;
+  } catch (error) {
+    console.error("Error fetching project IDs for static generation:", error);
+    return [];
+  }
+}
+
+// Server Component
+export default async function ProjectPage({ params }: { params: { id: string } }) {
+  const project = await fetchProject(params.id);
+
+  if (!project) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-red-500">Project Not Found</h1>
+          <p className="mt-4 text-muted-foreground">The requested project does not exist.</p>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  return <ProjectDetails project={project} />;
 }
