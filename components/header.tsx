@@ -48,7 +48,7 @@ export function Header() {
       <div className="container flex h-20 items-center justify-between">
         <Link href="/" className="flex items-center space-x-4 px-6 text-3xl">
         <picture>
-  <source srcset="/my_folders_dark.png" media="(prefers-color-scheme: dark)" />
+  <source srcSet="/my_folders_dark.png" media="(prefers-color-scheme: dark)" />
   <img src="/my_folders.png" alt="My Folders" className="h-28 w-auto" />
 </picture>
         </Link>
